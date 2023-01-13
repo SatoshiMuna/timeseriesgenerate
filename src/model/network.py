@@ -3,6 +3,9 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+dtype = torch.float64 if torch.cuda.is_available() else torch.float32
+
 def vae_loss_function(predict, target, mu, log_var):
     reconstruct_loss = F.binary_cross_entropy(predict, target, reduction='sum')     # negative log-likelihood
     kl_loss = -0.5 * torch.sum(1 + log_var - torch.pow(mu, 2) - torch.exp(log_var)) # KL divergence
