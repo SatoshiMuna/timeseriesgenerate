@@ -7,8 +7,11 @@ device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 dtype = torch.float64 if torch.cuda.is_available() else torch.float32
 
 def vae_loss_function(predict, target, mu, log_var):
-    reconstruct_loss = F.binary_cross_entropy(predict, target, reduction='sum')     # negative log-likelihood
-    kl_loss = -0.5 * torch.sum(1 + log_var - torch.pow(mu, 2) - torch.exp(log_var)) # KL divergence
+    # negative log-likelihood
+    reconstruct_loss = F.mse_loss(predict, target)     # F.binary_cross_entropy()
+    # KL divergence
+    kl_loss = -0.5 * torch.sum(1 + log_var - torch.pow(mu, 2) - torch.exp(log_var), dim=1)
+    kl_loss = torch.mean(kl_loss)
     vae_loss = reconstruct_loss + kl_loss
     return vae_loss, reconstruct_loss, kl_loss
 
@@ -34,7 +37,6 @@ class StockSeriesVAE(nn.Module):
         # Obtain the latent valiable z = μ + σ・ε
         e = torch.rand_like(torch.exp(log_var)) # e～N(0, I)
         z = mu + torch.exp(log_var / 2) * e
-
         return mu, log_var, z
 
     def decode(self, z):
