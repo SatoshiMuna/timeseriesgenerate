@@ -8,4 +8,4 @@ def main(stock_code, start_date, end_date, insample_end_date):
     trainer = NetworkTrainer(stock_data)
     trainer.do_train()
 if __name__ == '__main__':
-    main('8035.T','2012-1-1','2022-12-01','2022-02-01')
+    main('6501.T','2012-1-1','2022-12-01','2022-02-01')
