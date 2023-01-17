@@ -18,16 +18,21 @@ def get_stock_data(stock_code, start_date, end_date, use_cols=['Open', 'High', '
     return stock_data[use_cols]
     
 class StockSeriesDataSet(Dataset):
-    def __init__(self, is_train, stock_data, window_size, preprocess=True):
+    def __init__(self, is_train, stock_data, window_size, target_size, preprocess=True):
         super().__init__()
+        self.mask = -99.9
         self.inputs = []
+        self.targets = []
+        self.original_targets = []
         self.bc_lambda = None
         series = stock_data['Close']
         x = series.to_numpy()
         if preprocess:
             x, self.bc_lambda = self.preprocess(x)
-        for i in range(x.shape[0] - window_size + 1):
-            self.inputs.append(torch.tensor(x[i:i+window_size]))         
+        for i in range(x.shape[0] - window_size + 1 - target_size):
+            self.inputs.append(torch.tensor(x[i:i+window_size])) 
+            self.original_targets.append(torch.tensor(x[i+window_size:i+window_size+target_size]))
+            self.targets.append(torch.full((target_size,), self.mask))      
         
     def preprocess(self, x):
         # Box-Cox transform
@@ -43,7 +48,7 @@ class StockSeriesDataSet(Dataset):
         return len(self.inputs)
 
     def __getitem__(self, index):
-        return self.inputs[index]
+        return self.inputs[index], self.targets[index], self.original_targets[index]
 
 
     
