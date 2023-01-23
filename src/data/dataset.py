@@ -1,13 +1,9 @@
 import logging
-import matplotlib.pyplot as plt
 import yfinance as yf
 import numpy as np
 import pandas as pd
 import torch
 from torch.utils.data import Dataset
-from data.datautil import Transform
-from scipy.stats import boxcox
-from scipy.special import inv_boxcox
 
 def get_stock_data(stock_code, start_date, end_date, use_cols=['Open', 'High', 'Low', 'Close', 'Volume']):
     code_info = yf.Ticker(stock_code) 
@@ -19,7 +15,7 @@ def get_stock_data(stock_code, start_date, end_date, use_cols=['Open', 'High', '
     return stock_data[use_cols]
     
 class StockSeriesDataSet(Dataset):
-    def __init__(self, is_train, stock_data, window_size, target_size, insample_end_idx, col_stats=None, mask=0):
+    def __init__(self, is_train, stock_data, window_size, target_size, insample_end_idx, col_stats=None, mask=-100):
         super().__init__()
         self.inputs = []
         self.targets = []
@@ -39,10 +35,10 @@ class StockSeriesDataSet(Dataset):
                 
         x = x.to_numpy()
         for i in range(x.shape[0] - window_size + 1 - target_size):
-            self.inputs.append(np.squeeze(x[i:i+window_size+target_size]))
+            self.inputs.append(x[i:i+window_size+target_size])
             t = np.copy(x[i:i+window_size+target_size]) 
             t[-target_size:,:] = mask           
-            self.targets.append(np.squeeze(t))
+            self.targets.append(t)
 
     def __len__(self):
         return len(self.inputs)

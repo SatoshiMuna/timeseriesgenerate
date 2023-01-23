@@ -3,11 +3,12 @@ import numpy as np
 import torch
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
-from model.network import device, dtype, StockSeriesVAE, vae_loss_function
+from model.network import device, dtype, StockSeriesFcVAE, StockSeriesLstmVAE, vae_loss_function
 from data.dataset import StockSeriesDataSet
 
 class NetworkTrainer:
-    def __init__(self, stock_data, input_size=4, hidden_size=64, latent_size=16, sequence_len=32, target_len=1, insample_end_idx=None, seed=1):
+    def __init__(self, stock_data, input_size=4, hidden_size=64, latent_size=2, sequence_len=32, target_len=1,
+                 num_layers=1, bidirectional=False, insample_end_idx=None, seed=1):
         self.stock_data = stock_data
         self.sequence_length = sequence_len
         self.target_length = target_len
@@ -16,10 +17,11 @@ class NetworkTrainer:
         # Initialize network
         torch.manual_seed(seed)
         input_dim = self.sequence_length + self.target_length
-        self.model = StockSeriesVAE(input_dim, hidden_size, latent_size)
+        #self.model = StockSeriesFcVAE(input_dim, hidden_size, latent_size)
+        self.model = StockSeriesLstmVAE(input_size, hidden_size, num_layers, bidirectional, latent_size, sequence_len+target_len)
 
     def do_train(self, batch_size=64, learning_rate=0.01, epoch=10):
-        writer = SummaryWriter(log_dir='summary')
+        writer = SummaryWriter(log_dir='summary/'+type(self.model).__name__)
         # Training Data
         train_dataset = StockSeriesDataSet(True, self.stock_data, self.sequence_length, self.target_length, self.insample_end_idx)
         train_loader = DataLoader(dataset=train_dataset, batch_size=batch_size, shuffle=True, drop_last=True, num_workers=2)
@@ -44,7 +46,7 @@ class NetworkTrainer:
             print(f"epoch:{e}, train_loss:{vae_loss.item()}, recon_loss:{reconstruct_loss.item()}, kl_loss:{kl_loss.item()}")
             logging.info('epoch:%s, train_loss:%s, recon_loss:%s, kl_loss:%s, model_save:%s', e, vae_loss.item(), reconstruct_loss.item(), kl_loss.item(), vae_loss.item()<preloss)
             if vae_loss.item() < preloss:
-                torch.save(self.model.state_dict(), 'learned_model.pth')
+                torch.save(self.model.state_dict(), type(self.model).__name__+'_learned_model.pth')
                 preloss = vae_loss.item()
             # Out-of-Sample Testing
             test_losses, test_reclosses, test_kllosses = self.do_test(train_dataset.col_stats)
@@ -68,7 +70,7 @@ class NetworkTrainer:
         if self.model is None:
             train_dataset = StockSeriesDataSet(True, self.stock_data, self.sequence_length, self.target_length, self.insample_end_idx)
             col_stats = train_dataset.col_stats
-            self.model.load_state_dict(torch.load('learned_model.pth'))            
+            self.model.load_state_dict(torch.load(type(self.model).__name__+'_learned_model.pth'))            
         self.model.to(device, dtype)  
         self.model.eval()
 
