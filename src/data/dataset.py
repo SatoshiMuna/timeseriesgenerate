@@ -20,7 +20,7 @@ class StockSeriesDataSet(Dataset):
         self.inputs = []
         self.targets = []
         self.col_stats = {} if col_stats is None else col_stats
-        series = stock_data[['Close']]
+        series = stock_data[['Open', 'High', 'Low', 'Close']]
         
         if is_train:
             x = series[:insample_end_idx+1]
