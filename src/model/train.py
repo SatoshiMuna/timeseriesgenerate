@@ -53,18 +53,20 @@ class NetworkTrainer:
             # Out-of-Sample Testing
             test_losses, test_reclosses, test_kllosses, t_in = self.do_test(train_dataset.col_stats, e)
             print(f"epoch:{e}, test_loss:{test_losses.mean()}, test_recloss:{test_reclosses.mean()}, test_klloss:{test_kllosses.mean()}")
-            
+            logging.info('epoch:%s, test_loss:%s, recon_loss:%s, kl_loss:%s', e, test_losses.mean(), test_reclosses.mean(), test_kllosses.mean())
+          
             # Output results
             self._write_results_for_tensorboard(writer, e+1, vae_loss.item(), reconstruct_loss.item(), kl_loss.item(), x_ori, x_out,
                                                 test_losses.mean(), test_reclosses.mean(), test_kllosses.mean(), t_in, train_dataset.col_stats)
                 
         writer.close()
   
-    def do_test(self, col_stats=None, index=0):
-        if self.model is None:
+    def do_test(self, isTestOnly=False, col_stats=None, index=0):
+        if isTestOnly is True:
             train_dataset = StockSeriesDataSet(True, self.stock_data, self.sequence_length, self.target_length, self.insample_end_idx)
             col_stats = train_dataset.col_stats
-            self.model.load_state_dict(torch.load(type(self.model).__name__+'_learned_model.pth'))            
+            self.model.load_state_dict(torch.load(type(self.model).__name__+'_learned_model.pth')) 
+            logging.info('Start Testing - model:%s', type(self.model).__name__) 
         self.model.to(device, dtype)  
         self.model.eval()
 
@@ -83,9 +85,13 @@ class NetworkTrainer:
                 loss[idx] = vae_loss.item()
                 recloss[idx] = reconstruct_loss.item()
                 klloss[idx] = kl_loss.item()
-        
-        return loss, recloss, klloss, test_dataset[index]
+        if isTestOnly is True:
+            return loss, recloss, klloss, test_dataset[index], col_stats
+        else:
+            return loss, recloss, klloss, test_dataset[index]
 
+    def get_model(self):
+        return self.model
 
     def _write_results_for_tensorboard(self, writer, epoch, train_loss, train_rcloss, train_klloss, train_ori, train_out,
                                        test_loss, test_rcloss, test_klloss, test_sample, col_stats):
