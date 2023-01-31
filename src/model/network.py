@@ -8,7 +8,7 @@ dtype = torch.float64 if torch.cuda.is_available() else torch.float32
 
 def vae_loss_function(predict, target, mu, log_var):
     # negative log-likelihood
-    reconstruct_loss = F.mse_loss(predict, target)     # F.binary_cross_entropy()
+    reconstruct_loss = F.mse_loss(predict, target)     
     # KL divergence
     kl_loss = -0.5 * torch.sum(1 + log_var - torch.pow(mu, 2) - torch.exp(log_var), dim=1)
     kl_loss = torch.mean(kl_loss)
@@ -123,7 +123,7 @@ class StockSeriesLstmVAE2(nn.Module):
         self.lstm_decode = nn.LSTM(input_size=input_size, hidden_size=hidden_size, num_layers=num_layers, batch_first=True, bidirectional=bidirectional)
         self.fc_decode2 = nn.Linear(hidden_size, input_size)
         self.fc_output = nn.Linear(self.D*hidden_size, 1)
-        self.relu = nn.ReLU()
+        self.relu = nn.GELU()
 
     def encode(self, x):
         h_0 = torch.zeros(self.D*self.num_layers, x.size(0), self.hidden_size).to(device, dtype)

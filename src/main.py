@@ -10,15 +10,15 @@ def main(stock_code, start_date, end_date, insample_end_date, exec_training):
     logging.basicConfig(filename='timeseriesgenerate.log', level=logging.INFO, format='%(levelname)s:%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
     stock_data = get_stock_data(stock_code, start_date, end_date)
     insample_end_idx = stock_data.index.get_loc(insample_end_date)
-    trainer = NetworkTrainer(stock_data=stock_data, input_size=4, hidden_size=128, latent_size=8, insample_end_idx=insample_end_idx)
+    trainer = NetworkTrainer(stock_data=stock_data, input_size=4, hidden_size=128, latent_size=16, sequence_len=32, insample_end_idx=insample_end_idx)
     if exec_training == 'y':
-        trainer.do_train(epoch=100)
+        trainer.do_train(epoch=50)
     else:
-        loss, recloss, klloss, sample, stats = trainer.do_test(isTestOnly=True, index=30)
+        loss, recloss, klloss, sample, stats = trainer.do_test(isTestOnly=True, index=190)
         model = trainer.get_model()          
         model.eval()
         with torch.no_grad():
-            z = torch.randn(100, 8).to(device, dtype)
+            z = torch.randn(100, 16).to(device, dtype)
             x = sample[1].unsqueeze(0).to(device, dtype)
             y = []
             for i in range(z.size(0)):
@@ -26,14 +26,28 @@ def main(stock_code, start_date, end_date, insample_end_date, exec_training):
                 y.append(out.to('cpu').numpy().copy())
             ori = sample[0][:,3][-1].to('cpu').numpy().copy()
             pre = sample[0][:,3][-2].to('cpu').numpy().copy()
-        st = stats['Close']
-        c = [s[-1]*st[1]+st[0] for s in y]
-        ori = ori*st[1]+st[0]
-        pre = pre*st[1]+st[0]
-        plt.grid(True)
-        v = plt.hist(c, bins=16, alpha=0.5)
-        plt.vlines(ori, v[0].min(), v[0].max())
-        plt.vlines(pre, v[0].min(), v[0].max(), 'r')
+        _visualize(y, stats['Close'], ori, pre)
+
+def _visualize(values, stats, original, previous):
+        x = [s[-1]*stats[1]+stats[0] for s in values]
+        original = original * stats[1] + stats[0]
+        previous = previous * stats[1] + stats[0]
+        fig, axes = plt.subplots(1,2)
+        v0 = axes[0].hist(x, bins=20, alpha=0.5)
+        axes[0].vlines(original, ymin=0, ymax=v0[0].max(), colors='b', label='price of tomorrow')
+        axes[0].vlines(previous, ymin=0, ymax=v0[0].max(), colors='r', label='price of today')
+        axes[0].set_title('forecast distribution')
+        axes[0].set_xlabel('close price')
+        axes[0].set_ylabel('frequence')
+        axes[0].legend()
+        axes[0].grid(True)
+        v1 = axes[1].hist(x, bins=20, alpha=0.5, cumulative=True, density=True)
+        axes[1].vlines(previous, ymin=0, ymax=v1[0].max(), colors='r', label='price of today')
+        axes[1].set_title('forecast cumulative distribution')
+        axes[1].set_xlabel('close price')
+        axes[1].set_ylabel('probability')
+        axes[1].legend()
+        axes[1].grid(True)
         plt.show()
 
 if __name__ == '__main__':
