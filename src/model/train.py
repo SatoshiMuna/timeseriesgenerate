@@ -51,7 +51,7 @@ class NetworkTrainer:
                 preloss = vae_loss.item()
             
             # Out-of-Sample Testing
-            test_losses, test_reclosses, test_kllosses, t_in = self.do_test(train_dataset.col_stats, e)
+            test_losses, test_reclosses, test_kllosses, t_in = self.do_test(False, train_dataset.col_stats, e)
             print(f"epoch:{e}, test_loss:{test_losses.mean()}, test_recloss:{test_reclosses.mean()}, test_klloss:{test_kllosses.mean()}")
             logging.info('epoch:%s, test_loss:%s, recon_loss:%s, kl_loss:%s', e, test_losses.mean(), test_reclosses.mean(), test_kllosses.mean())
           
