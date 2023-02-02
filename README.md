@@ -39,16 +39,15 @@ The program does NOT ensure forecasting accuracy and trading performance!
 * Target stock code is 6501. 
 * Actual close price of the stock and loss transition in model training are bellow.
 
-<br>
-![Close price](https://github.com/SatoshiMuna/timeseriesgenerate/blob/main/SelfAttnLSTM(r%3D2)_loss.png)
+![Close price](https://github.com/SatoshiMuna/timeseriesgenerate/blob/main/close_price.jpg)
 
-![Loss transition](https://github.com/SatoshiMuna/timeseriesgenerate/blob/main/SelfAttnLSTM(r%3D2)_loss.png)
+![Loss transition](https://github.com/SatoshiMuna/timeseriesgenerate/blob/main/loss_transition.jpg)
 
 * Trained model is applied for test data. 
 * An example of forecasted(synthesized) close price is bellow.
-<br>
-![Forecasted price](https://github.com/SatoshiMuna/timeseriesgenerate/blob/main/SelfAttnLSTM(r%3D2)_loss.png)
+
+![Forecasted price](https://github.com/SatoshiMuna/timeseriesgenerate/blob/main/forecasted_price.jpg)
 
 * Some examples of 1-step ahead close price distribution obtained by sampling.
-<br>
-![Price distribution](https://github.com/SatoshiMuna/timeseriesgenerate/blob/main/SelfAttnLSTM(r%3D2)_loss.png)
+
+![Price distribution1](https://github.com/SatoshiMuna/timeseriesgenerate/blob/main/price_distribution1.jpg)

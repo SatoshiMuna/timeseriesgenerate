@@ -1,6 +1,7 @@
 import logging
 import numpy as np
 import torch
+
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 from model.network import device, dtype, StockSeriesFcVAE, StockSeriesLstmVAE, StockSeriesLstmVAE2, vae_loss_function
@@ -8,11 +9,12 @@ from data.dataset import StockSeriesDataSet
 
 class NetworkTrainer:
     def __init__(self, stock_data, input_size=4, hidden_size=128, latent_size=8, sequence_len=32, target_len=1,
-                 num_layers=1, bidirectional=False, insample_end_idx=None, seed=1):
+                 num_layers=1, bidirectional=False, insample_end_idx=None, open2close=False, seed=1):
         self.stock_data = stock_data
         self.sequence_length = sequence_len
         self.target_length = target_len
         self.insample_end_idx = insample_end_idx
+        self.open2close = open2close
 
         # Initialize network
         torch.manual_seed(seed)
@@ -24,7 +26,7 @@ class NetworkTrainer:
     def do_train(self, batch_size=64, learning_rate=0.01, epoch=10):
         writer = SummaryWriter(log_dir='summary/'+type(self.model).__name__)
         # Training Data
-        train_dataset = StockSeriesDataSet(True, self.stock_data, self.sequence_length, self.target_length, self.insample_end_idx)
+        train_dataset = StockSeriesDataSet(True, self.stock_data, self.sequence_length, self.target_length, self.insample_end_idx, open2close=self.open2close)
         train_loader = DataLoader(dataset=train_dataset, batch_size=batch_size, shuffle=True, drop_last=True, num_workers=2)
         # Start Model Training
         logging.info('Start Training - size:%s, epoch:%s, batch:%s', len(train_dataset), epoch, batch_size)
@@ -38,7 +40,7 @@ class NetworkTrainer:
                 x_in = x_in.to(device, dtype)
                 x_ori = x_ori.to(device, dtype)
                 x_out, mu, log_var = self.model(x_in)
-                vae_loss, reconstruct_loss, kl_loss = vae_loss_function(x_out, x_ori[:,:,3:], mu, log_var)
+                vae_loss, reconstruct_loss, kl_loss = vae_loss_function(x_out, x_ori[:,:,3:4], mu, log_var)
                 # Backward and optimizer step
                 optimizer.zero_grad()
                 vae_loss.backward()
@@ -63,14 +65,14 @@ class NetworkTrainer:
   
     def do_test(self, isTestOnly=False, col_stats=None, index=0):
         if isTestOnly is True:
-            train_dataset = StockSeriesDataSet(True, self.stock_data, self.sequence_length, self.target_length, self.insample_end_idx)
+            train_dataset = StockSeriesDataSet(True, self.stock_data, self.sequence_length, self.target_length, self.insample_end_idx, open2close=self.open2close)
             col_stats = train_dataset.col_stats
             self.model.load_state_dict(torch.load(type(self.model).__name__+'_learned_model.pth')) 
             logging.info('Start Testing - model:%s', type(self.model).__name__) 
         self.model.to(device, dtype)  
         self.model.eval()
 
-        test_dataset = StockSeriesDataSet(False, self.stock_data, self.sequence_length, self.target_length, self.insample_end_idx, col_stats)
+        test_dataset = StockSeriesDataSet(False, self.stock_data, self.sequence_length, self.target_length, self.insample_end_idx, open2close=self.open2close, col_stats=col_stats)
         test_loader = DataLoader(dataset=test_dataset, batch_size=1, shuffle=False)
         loss = np.zeros(len(test_dataset))
         recloss = np.zeros(len(test_dataset))
@@ -81,7 +83,7 @@ class NetworkTrainer:
                 x_in = x_in.to(device, dtype)
                 x_ori = x_ori.to(device, dtype)
                 x_out, mu, log_var = self.model(x_in)
-                vae_loss, reconstruct_loss, kl_loss = vae_loss_function(x_out, x_ori[:,:,3:], mu, log_var)
+                vae_loss, reconstruct_loss, kl_loss = vae_loss_function(x_out, x_ori[:,:,3:4], mu, log_var)
                 loss[idx] = vae_loss.item()
                 recloss[idx] = reconstruct_loss.item()
                 klloss[idx] = kl_loss.item()
