@@ -50,4 +50,5 @@ The program does NOT ensure forecasting accuracy and trading performance!
 
 * Some examples of 1-step ahead close price distribution obtained by sampling.
 
-![Price distribution1](https://github.com/SatoshiMuna/timeseriesgenerate/blob/main/price_distribution1.jpg)
+![Price distribution1](https://github.com/SatoshiMuna/timeseriesgenerate/blob/main/price_distribution1.png)
+![Price distribution2](https://github.com/SatoshiMuna/timeseriesgenerate/blob/main/price_distribution2.png)
