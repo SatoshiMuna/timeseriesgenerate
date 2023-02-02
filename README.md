@@ -46,8 +46,8 @@ The program does NOT ensure forecasting accuracy and trading performance!
 * Trained model is applied for test data. 
 * An example of forecasted(synthesized) close price is bellow.
 <br>
-![Forecasted price](https://github.com/SatoshiMuna/timeseriesgenerate/blob/main/SelfAttnLSTM(r%3D2)_loss.png)
+![Forecasted price](https://github.com/SatoshiMuna/timeseriesgenerate/blob/main/forecasted_price.jpg)
 
 * Some examples of 1-step ahead close price distribution obtained by sampling.
 <br>
-![Price distribution](https://github.com/SatoshiMuna/timeseriesgenerate/blob/main/SelfAttnLSTM(r%3D2)_loss.png)
+![Price distribution1](https://github.com/SatoshiMuna/timeseriesgenerate/blob/main/price_distribution1.jpg)

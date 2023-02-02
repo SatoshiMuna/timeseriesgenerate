@@ -147,7 +147,7 @@ class StockSeriesLstmVAE2(nn.Module):
         out, (h_n, c_n) = self.lstm_decode(x, (h_0, c_0))   # out:(N,L,D*Ho)
         val = self.fc_output(out[:,-1,:])
         x[:,-1,3] = val.squeeze(1)
-        return x[:,:,3:]
+        return x[:,:,3:4]
 
     def forward(self, x):
         mu, log_var, z = self.encode(x)
