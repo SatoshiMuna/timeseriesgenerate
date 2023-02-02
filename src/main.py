@@ -10,13 +10,13 @@ def main(stock_code, start_date, end_date, insample_end_date, exec_training):
     logging.basicConfig(filename='timeseriesgenerate.log', level=logging.INFO, format='%(levelname)s:%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
     stock_data = get_stock_data(stock_code, start_date, end_date)
     insample_end_idx = stock_data.index.get_loc(insample_end_date)
-    fcst_open2close = True  # if True, input_size is set to 5
-    trainer = NetworkTrainer(stock_data=stock_data, input_size=5, hidden_size=128, latent_size=16, sequence_len=32,
+    fcst_open2close = False  # if True, input_size is set to 5
+    trainer = NetworkTrainer(stock_data=stock_data, input_size=4, hidden_size=128, latent_size=16, sequence_len=32,
                              bidirectional=False, insample_end_idx=insample_end_idx, open2close=fcst_open2close)
     if exec_training == 'y':
         trainer.do_train(epoch=50)
     else:
-        loss, recloss, klloss, sample, stats = trainer.do_test(isTestOnly=True, index=3)
+        loss, recloss, klloss, sample, stats = trainer.do_test(isTestOnly=True, index=6)
         model = trainer.get_model()          
         model.eval()
         with torch.no_grad():
@@ -35,12 +35,12 @@ def _visualize(values, stats, original, previous):
         original = original * stats[1] + stats[0]
         previous = previous * stats[1] + stats[0]
         fig, axes = plt.subplots(1,2)
-        v0 = axes[0].hist(x, bins=20, alpha=0.5)
-        axes[0].vlines(original, ymin=0, ymax=v0[0].max(), colors='b', label='next price')
+        v0 = axes[0].hist(x, bins=20, alpha=0.5, density=True, label='1-step ahead predicted prices')
+        axes[0].vlines(original, ymin=0, ymax=v0[0].max(), colors='b', label='actual 1-step ahead price')
         axes[0].vlines(previous, ymin=0, ymax=v0[0].max(), colors='r', label='current price')
         axes[0].set_title('forecast distribution')
         axes[0].set_xlabel('close price')
-        axes[0].set_ylabel('frequence')
+        axes[0].set_ylabel('probability')
         axes[0].legend()
         axes[0].grid(True)
         v1 = axes[1].hist(x, bins=20, alpha=0.5, cumulative=True, density=True)
