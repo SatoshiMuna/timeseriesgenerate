@@ -153,3 +153,11 @@ class StockSeriesLstmVAE2(nn.Module):
         mu, log_var, z = self.encode(x)
         x_decoded = self.decode(x, z)
         return x_decoded, mu, log_var
+
+class StockSeriesLstmGAN(nn.Module):
+    def __init__(self):
+        super().__init__()
+        pass
+
+    def forward(self, x):
+        pass
