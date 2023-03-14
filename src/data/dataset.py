@@ -16,18 +16,36 @@ def get_stock_data(stock_code, start_date, end_date, use_cols=['Open', 'High', '
     return stock_data[use_cols]
     
 class StockSeriesDataSet(Dataset):
-    def __init__(self, is_train, stock_data, window_size, target_size, insample_end_idx, use_cols=['Open', 'High', 'Low', 'Close'],
-                 open2close=False, col_stats=None, mask=-100):
+    """
+    DataSet class
+    """
+    def __init__(self, stock_data, window_size, target_size, insample_end_idx, use_cols=['Open', 'High', 'Low', 'Close'],
+                 open2close=False, is_train=True, mask=-100):
+        """
+        Constructor
+
+        Parameters
+        ----------
+        stock_data : Pandas.DataFrame - the matrix data for various stock values time series
+        window_size : int - the number of features for model input
+        target_size : int - the forecast horizon
+        insample_end_idx : int - end date of in-sample series when dividing the original series into in-sample and out-sample
+        use_cols : tuple  - stock value types used in the model  
+        open2close : bool - if True, the model forecast a close value using same day's open value
+        is_train : bool -  if True, training dataset is created
+        mask : float - masked value applied for the data in the forecast horizon 
+        """
         super().__init__()
         self.inputs = []
         self.targets = []
-        self.col_stats = {} if col_stats is None else col_stats
-        series = stock_data[list(use_cols)]
+        self.col_stats = {} 
+        series = stock_data[use_cols]        
+
+        x = series[:insample_end_idx+1]
+        for col_name in x:
+            self.col_stats[col_name] = (x.loc[:,col_name].mean(), x.loc[:,col_name].std())
         
         if is_train:
-            x = series[:insample_end_idx+1]
-            for col_name in x:
-                self.col_stats[col_name] = (x.loc[:,col_name].mean(), x.loc[:,col_name].std())
             x = x.apply(lambda z: (z-z.mean())/z.std(), axis=0)                
         else:
             x = series[insample_end_idx-window_size:].copy()
